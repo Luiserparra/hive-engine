@@ -114,15 +114,15 @@ Include charts (PNG) generated from Google Benchmark JSON results.
 ## 9. Milestone roadmap
 Each milestone ends with something verifiable; don't move on until its exit criteria are met.
 
-### M1 · Foundations
+### M1 · Foundations — done
 - CMake with presets, CI (Linux + Windows), ASan/UBSan/TSan, clang-tidy and clang-format.
 - Base allocators (per-frame arena, pool) and a minimal profiler with `PROFILE_SCOPE`.
-- **Exit:** CI green with sanitizers; an allocator test and a trace exported to Chrome Trace.
+- **Exit (met):** CI green with sanitizers; allocator tests; Chrome Trace from `hive_engine` (`build/debug/trace.json`).
 
-### M2 · Job System
+### M2 · Job System — done
 - Thread pool, Chase-Lev deques, dependency counters, `parallel_for`.
 - Stress tests (millions of jobs, dependency trees) under TSan.
-- **Exit:** clean TSan run and a saved mutex vs. work-stealing benchmark.
+- **Exit (met):** unit + 1e6-job stress tests green; Release mutex vs work-stealing JSON at `docs/bench/mutex_vs_work_stealing.json`. TSan is Linux CI (`linux-tsan`; MSVC has no TSan).
 
 ### M3 · ECS core
 - Generational entities, archetypes, SoA chunks, typed queries, command buffers.

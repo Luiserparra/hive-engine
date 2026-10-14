@@ -35,6 +35,7 @@ build/
 out/
 .vs/
 .cache/
+trace.json
 
 # Personal learning notes
 docs/learn/

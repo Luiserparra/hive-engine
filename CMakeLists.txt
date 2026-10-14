@@ -3,12 +3,21 @@ project(hive_engine LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-add_executable(hive_engine src/main.cpp)
+include(cmake/warnings.cmake)
+include(cmake/sanitizers.cmake)
 
-if(MSVC)
-  target_compile_options(hive_engine PRIVATE /W4 /permissive-)
-else()
-  target_compile_options(hive_engine PRIVATE -Wall -Wextra -Wpedantic)
+add_subdirectory(core)
+add_subdirectory(profiler)
+
+add_executable(hive_engine src/main.cpp)
+hive_set_warnings(hive_engine)
+hive_enable_sanitizers(hive_engine)
+target_link_libraries(hive_engine PRIVATE hive_core hive_profiler)
+
+include(CTest)
+if(BUILD_TESTING)
+    add_subdirectory(tests)
 endif()

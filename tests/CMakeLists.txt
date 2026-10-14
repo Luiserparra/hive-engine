@@ -16,8 +16,13 @@ add_executable(hive_tests
     jobs/test_deque.cpp
     jobs/test_scheduler.cpp
     jobs/test_stress.cpp
+    ecs/test_entity.cpp
+    ecs/test_world.cpp
+    ecs/test_migration.cpp
+    ecs/test_query.cpp
+    ecs/test_commands.cpp
 )
-target_link_libraries(hive_tests PRIVATE hive_core hive_profiler hive_jobs Catch2::Catch2WithMain)
+target_link_libraries(hive_tests PRIVATE hive_core hive_profiler hive_jobs hive_ecs Catch2::Catch2WithMain)
 hive_set_warnings(hive_tests)
 hive_enable_sanitizers(hive_tests)
 

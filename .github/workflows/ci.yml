@@ -69,4 +69,4 @@ jobs:
       - name: Configure
         run: cmake --preset asan
       - name: clang-tidy
-        run: clang-tidy -p build/asan core/*.cpp profiler/*.cpp jobs/*.cpp src/main.cpp
+        run: clang-tidy -p build/asan core/*.cpp profiler/*.cpp jobs/*.cpp ecs/*.cpp src/main.cpp

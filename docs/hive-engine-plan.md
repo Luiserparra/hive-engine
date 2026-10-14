@@ -124,9 +124,9 @@ Each milestone ends with something verifiable; don't move on until its exit crit
 - Stress tests (millions of jobs, dependency trees) under TSan.
 - **Exit (met):** unit + 1e6-job stress tests green; Release mutex vs work-stealing JSON at `docs/bench/mutex_vs_work_stealing.json`. TSan is Linux CI (`linux-tsan`; MSVC has no TSan).
 
-### M3 · ECS core
+### M3 · ECS core — done
 - Generational entities, archetypes, SoA chunks, typed queries, command buffers.
-- **Exit:** tests for creation/destruction/archetype migration; AoS vs. SoA vs. archetypes benchmark.
+- **Exit (met):** Catch2 tests for create/destroy/migration/query/command buffer; Release AoS vs SoA vs archetypes JSON at `docs/bench/aos_soa_archetype.json`.
 
 ### M4 · Parallel ECS
 - Per-chunk query execution on the job system; system scheduling with read/write conflict detection.

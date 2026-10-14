@@ -17,11 +17,12 @@ endif()
 add_subdirectory(core)
 add_subdirectory(profiler)
 add_subdirectory(jobs)
+add_subdirectory(ecs)
 
 add_executable(hive_engine src/main.cpp)
 hive_set_warnings(hive_engine)
 hive_enable_sanitizers(hive_engine)
-target_link_libraries(hive_engine PRIVATE hive_core hive_profiler hive_jobs)
+target_link_libraries(hive_engine PRIVATE hive_core hive_profiler hive_jobs hive_ecs)
 
 include(CTest)
 if(BUILD_TESTING)

@@ -1,0 +1,14 @@
+---
+description: Rules for threading, atomics and lock-free code in the job system and parallel ECS
+globs: ["jobs/**", "ecs/**", "profiler/**"]
+alwaysApply: false
+---
+# Concurrency
+
+- Every `std::atomic` operation states its memory order explicitly, with a comment justifying it. Never rely on the default `seq_cst` silently.
+- Pad or align data written by different threads with `alignas(std::hardware_destructive_interference_size)` to avoid false sharing.
+- No blocking locks in the job system's hot paths. A mutex is allowed only in setup/shutdown and must be commented.
+- `wait()` must help by running other jobs, never spin-sleep idly.
+- Any lock-free structure needs a stress test (many threads, millions of operations) before it's considered done.
+- Document ownership: which thread may read or write each piece of shared data.
+- When unsure whether code is race-free, say so explicitly instead of guessing.

@@ -1,0 +1,29 @@
+---
+description: Hive Engine project context and core principles
+alwaysApply: true
+---
+# Hive Engine
+
+C++20 portfolio project: a work-stealing job system + archetype-based SoA ECS, a custom profiler, and a "Swarm" boids demo (raylib + ImGui). The full plan lives in `docs/hive-engine-plan.md`; follow its milestones (M1-M7) and don't build ahead of the current one.
+
+## Principles
+- Performance and clarity over cleverness. Every abstraction must justify its cost.
+- Data-oriented design: think about memory layout and cache behavior first.
+- No hidden allocations in hot paths (jobs, ECS iteration, per-frame code).
+- Small, focused changes. Don't refactor unrelated code.
+- Never claim something is faster without a benchmark measured in Release.
+
+## Layout
+- `core/` allocators, containers, math
+- `jobs/` scheduler and work-stealing deques
+- `ecs/` entities, archetypes, queries, systems
+- `profiler/` scope macros, per-thread buffers, viewer
+- `demo/` Swarm app
+- `bench/` Google Benchmark
+- `tests/` Catch2 tests
+- `docs/` plan, design notes, performance investigation
+
+## Build
+- Configure/build with CMake presets: `cmake --preset debug`, `cmake --build --preset debug`.
+- Toolchain is MSVC on Windows (Ninja generator); CI also builds on Linux with Clang/GCC.
+- New source files must be added to the relevant `CMakeLists.txt`.

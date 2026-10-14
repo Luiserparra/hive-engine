@@ -1,0 +1,13 @@
+---
+description: Testing, sanitizers and benchmarking workflow
+globs: ["tests/**", "bench/**", "**/CMakeLists.txt", "CMakePresets.json"]
+alwaysApply: false
+---
+# Testing and performance
+
+- Every new feature comes with Catch2 tests in `tests/`, registered with CTest (`ctest --preset debug`).
+- Test the edge cases: empty, full, single element, concurrent access, entity destroyed mid-iteration.
+- Code must pass AddressSanitizer locally and TSan/UBSan in Linux CI.
+- Benchmarks use Google Benchmark in `bench/`, run only in Release, and output JSON for comparison.
+- When optimizing, record before/after numbers and add the result to `docs/performance-investigation.md`.
+- Don't change a benchmark and the code it measures in the same commit.

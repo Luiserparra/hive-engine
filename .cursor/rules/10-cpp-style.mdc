@@ -1,0 +1,17 @@
+---
+description: C++ coding style and modern C++ conventions
+globs: ["**/*.cpp", "**/*.h", "**/*.hpp"]
+alwaysApply: false
+---
+# C++ style
+
+- C++20. Prefer concepts over SFINAE, `std::span` over pointer+size, `constexpr` where possible.
+- Naming: `PascalCase` types, `snake_case` functions and variables, `m_` prefix for private members, `kPascalCase` constants.
+- Headers use `#pragma once`. Include what you use; no `using namespace` in headers.
+- Every module lives in its own namespace: `hive::core`, `hive::jobs`, `hive::ecs`, `hive::profiler`.
+- RAII for every resource. No raw `new`/`delete`; use allocators or `std::unique_ptr`.
+- No exceptions in hot paths. Use `std::expected` (or a project `Result` type) for recoverable errors and `HIVE_ASSERT` for invariants.
+- Avoid `virtual` and `std::function` in hot paths; prefer templates or `std::variant`, and note the trade-off in a comment when choosing.
+- Mark functions `noexcept` and `[[nodiscard]]` when it applies.
+- Code must compile warning-free with `/W4 /permissive-` (MSVC) and `-Wall -Wextra -Wpedantic`.
+- Comments explain *why*, not *what*.

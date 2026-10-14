@@ -30,7 +30,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install Ninja
-        run: sudo apt-get update && sudo apt-get install -y ninja-build
+        run: sudo apt-get update && sudo apt-get install -y ninja-build libgl1-mesa-dev libglu1-mesa-dev libx11-dev libxrandr-dev libxi-dev libxinerama-dev libxcursor-dev libxkbcommon-dev
       - name: Configure
         run: cmake --preset asan
       - name: Build
@@ -43,7 +43,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install Ninja
-        run: sudo apt-get update && sudo apt-get install -y ninja-build
+        run: sudo apt-get update && sudo apt-get install -y ninja-build libgl1-mesa-dev libglu1-mesa-dev libx11-dev libxrandr-dev libxi-dev libxinerama-dev libxcursor-dev libxkbcommon-dev
       - name: Configure
         run: cmake --preset tsan
       - name: Build
@@ -65,8 +65,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install tools
-        run: sudo apt-get update && sudo apt-get install -y ninja-build clang-tidy
+        run: sudo apt-get update && sudo apt-get install -y ninja-build clang-tidy libgl1-mesa-dev libglu1-mesa-dev libx11-dev libxrandr-dev libxi-dev libxinerama-dev libxcursor-dev libxkbcommon-dev
       - name: Configure
         run: cmake --preset asan
       - name: clang-tidy
-        run: clang-tidy -p build/asan core/*.cpp profiler/*.cpp jobs/*.cpp ecs/*.cpp src/main.cpp
+        run: clang-tidy -p build/asan core/*.cpp profiler/*.cpp jobs/*.cpp ecs/*.cpp demo/spatial_grid.cpp demo/steering.cpp demo/soa_sim.cpp demo/aos_sim.cpp demo/renderer.cpp demo/main.cpp

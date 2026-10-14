@@ -12,6 +12,7 @@ FetchContent_MakeAvailable(Catch2)
 add_executable(hive_tests
     core/test_arena.cpp
     core/test_pool.cpp
+    core/test_vec2.cpp
     profiler/test_profiler.cpp
     jobs/test_deque.cpp
     jobs/test_scheduler.cpp
@@ -23,8 +24,10 @@ add_executable(hive_tests
     ecs/test_commands.cpp
     ecs/test_parallel_query.cpp
     ecs/test_system_scheduler.cpp
+    demo/test_spatial_grid.cpp
+    demo/test_steering.cpp
 )
-target_link_libraries(hive_tests PRIVATE hive_core hive_profiler hive_jobs hive_ecs Catch2::Catch2WithMain)
+target_link_libraries(hive_tests PRIVATE hive_core hive_profiler hive_jobs hive_ecs hive_swarm_sim Catch2::Catch2WithMain)
 hive_set_warnings(hive_tests)
 hive_enable_sanitizers(hive_tests)
 

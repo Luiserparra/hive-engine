@@ -132,10 +132,10 @@ Each milestone ends with something verifiable; don't move on until its exit crit
 - Per-chunk query execution on the job system; system scheduling with read/write conflict detection.
 - **Exit (met):** Catch2 parallel query + wave tests; Release 1→N JSON at `docs/bench/parallel_query_scaling.json`. Independent systems overlap in `trace.json` (Perfetto / `chrome://tracing`). TSan is Linux CI (`linux-tsan`; MSVC has no TSan).
 
-### M5 · "Swarm" visual demo
+### M5 · "Swarm" visual demo — done
 - raylib + ImGui, boids with a spatial grid, instanced rendering, continuous spawn/despawn.
-- Panel with live toggles (AoS/SoA, threads, grid on/off) and the profiler viewer.
-- **Exit:** 100k entities at ≥ 60 FPS in Release, with toggles showing the difference instantly.
+- Panel with live toggles (AoS/SoA, threads, grid on/off) and a timings panel (not a flame graph).
+- **Exit (met):** 100k entities at ≥ 60 FPS in Release, with toggles showing the difference instantly. Measure locally (`cmake --preset release` then `build/release/hive_engine`).
 
 ### M6 · Performance investigation
 - Find a real bottleneck with the profiler and `perf`, fix it, and measure.

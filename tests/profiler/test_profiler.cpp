@@ -1,14 +1,19 @@
+#include "jobs/scheduler.h"
 #include "profiler/chrome_trace.h"
 #include "profiler/profiler.h"
 
 #include <catch2/catch_test_macros.hpp>
 
+#include <atomic>
+#include <cstdint>
 #include <filesystem>
 #include <fstream>
 #include <iterator>
+#include <set>
 #include <string>
 #include <string_view>
 #include <thread>
+#include <vector>
 
 TEST_CASE("profiler scopes are no-ops without init") {
     hive::profiler::shutdown();
@@ -132,5 +137,47 @@ TEST_CASE("profiler chrome trace includes recorded scope names") {
     REQUIRE(in.good());
     const std::string body((std::istreambuf_iterator<char>(in)), {});
     REQUIRE(body.find("Arena.allocate") != std::string::npos);
+    hive::profiler::shutdown();
+}
+
+TEST_CASE("profiler snapshot_all_threads covers worker tids") {
+    hive::profiler::init(256);
+    hive::jobs::Scheduler sched{2};
+    hive::jobs::Counter done;
+    std::atomic<int> spins{0};
+    for (int i = 0; i < 128; ++i) {
+        sched.schedule(
+            [&spins] {
+                PROFILE_SCOPE("worker_job");
+                int x = 0;
+                for (int k = 0; k < 20000; ++k) {
+                    x += k;
+                }
+                spins.fetch_add(x != 0 ? 1 : 0, std::memory_order_relaxed);
+            },
+            &done);
+    }
+    sched.wait(done);
+    REQUIRE(spins.load(std::memory_order_relaxed) == 128);
+
+    const std::vector<hive::profiler::Event> events = hive::profiler::snapshot_all_threads();
+    std::set<std::uint32_t> tids;
+    bool saw_worker_job = false;
+    for (const hive::profiler::Event& e : events) {
+        tids.insert(e.tid);
+        if (e.name != nullptr && std::string_view(e.name) == "worker_job") {
+            saw_worker_job = true;
+        }
+    }
+    REQUIRE(saw_worker_job);
+    REQUIRE(tids.size() >= 2);
+
+    const auto path = std::filesystem::temp_directory_path() / "hive_mt_trace.json";
+    hive::profiler::write_chrome_trace(path.string().c_str());
+    std::ifstream in(path);
+    REQUIRE(in.good());
+    const std::string body((std::istreambuf_iterator<char>(in)), {});
+    REQUIRE(body.find("worker_job") != std::string::npos);
+
     hive::profiler::shutdown();
 }

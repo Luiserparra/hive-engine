@@ -193,6 +193,7 @@ void Scheduler::wait(Counter& counter) {
 void Scheduler::worker_main(unsigned index) {
     detail::t_scheduler = this;
     t_worker = m_workers[index].get();
+    hive::profiler::init();
 
     unsigned yields = 0;
     while (m_running.load(std::memory_order_acquire)) {
@@ -208,6 +209,10 @@ void Scheduler::worker_main(unsigned index) {
         park_idle();
         yields = 0;
     }
+
+    hive::profiler::shutdown();
+    detail::t_scheduler = nullptr;
+    t_worker = nullptr;
 }
 
 void Scheduler::notify_idle() noexcept {

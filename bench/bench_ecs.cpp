@@ -1,4 +1,6 @@
+#include "ecs/system_scheduler.h"
 #include "ecs/world.h"
+#include "jobs/scheduler.h"
 
 #include <benchmark/benchmark.h>
 
@@ -18,6 +20,11 @@ struct Position {
 struct Velocity {
     float x = 1;
     float y = 1;
+};
+
+struct Color {
+    float r = 0;
+    float g = 0;
 };
 
 struct AoS {
@@ -71,3 +78,48 @@ static void BM_Archetype(benchmark::State& state) {
     }
 }
 BENCHMARK(BM_Archetype)->Unit(benchmark::kMillisecond);
+
+static void BM_ParallelQuery(benchmark::State& state) {
+    const unsigned threads = static_cast<unsigned>(state.range(0));
+    hive::jobs::Scheduler sched{threads};
+    hive::ecs::World world;
+    for (std::size_t i = 0; i < kN; ++i) {
+        const hive::ecs::Entity entity = world.create();
+        world.add<Position>(entity, Position{});
+        world.add<Velocity>(entity, Velocity{});
+    }
+    for (auto _ : state) {
+        world.query<Position, const Velocity>().parallel_each(
+            sched, [](Position& pos, const Velocity& vel) {
+                integrate(pos, vel);
+            });
+        benchmark::ClobberMemory();
+    }
+}
+BENCHMARK(BM_ParallelQuery)->Arg(1)->Arg(2)->Arg(4)->Arg(8)->Unit(benchmark::kMillisecond);
+
+static void BM_IndependentSystems(benchmark::State& state) {
+    const unsigned threads = static_cast<unsigned>(state.range(0));
+    hive::jobs::Scheduler sched{threads};
+    hive::ecs::World world;
+    for (std::size_t i = 0; i < kN; ++i) {
+        const hive::ecs::Entity entity = world.create();
+        world.add<Position>(entity, Position{});
+        world.add<Velocity>(entity, Velocity{});
+        world.add<Color>(entity, Color{});
+    }
+    hive::ecs::SystemScheduler systems(sched);
+    systems.add<Position, const Velocity>("integrate", [](Position& pos, const Velocity& vel) {
+        integrate(pos, vel);
+    });
+    systems.add<Color, const Velocity>("recolor", [](Color& color, const Velocity& vel) {
+        color.r = vel.x;
+        color.g = vel.y;
+    });
+    systems.build();
+    for (auto _ : state) {
+        systems.run(world);
+        benchmark::ClobberMemory();
+    }
+}
+BENCHMARK(BM_IndependentSystems)->Arg(1)->Arg(2)->Arg(4)->Arg(8)->Unit(benchmark::kMillisecond);

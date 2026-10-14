@@ -128,9 +128,9 @@ Each milestone ends with something verifiable; don't move on until its exit crit
 - Generational entities, archetypes, SoA chunks, typed queries, command buffers.
 - **Exit (met):** Catch2 tests for create/destroy/migration/query/command buffer; Release AoS vs SoA vs archetypes JSON at `docs/bench/aos_soa_archetype.json`.
 
-### M4 · Parallel ECS
+### M4 · Parallel ECS — done
 - Per-chunk query execution on the job system; system scheduling with read/write conflict detection.
-- **Exit:** a 1→N thread scaling chart and independent systems visibly running in parallel in the profiler.
+- **Exit (met):** Catch2 parallel query + wave tests; Release 1→N JSON at `docs/bench/parallel_query_scaling.json`. Independent systems overlap in `trace.json` (Perfetto / `chrome://tracing`). TSan is Linux CI (`linux-tsan`; MSVC has no TSan).
 
 ### M5 · "Swarm" visual demo
 - raylib + ImGui, boids with a spatial grid, instanced rendering, continuous spawn/despawn.

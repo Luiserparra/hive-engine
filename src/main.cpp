@@ -1,5 +1,6 @@
 #include "core/arena.h"
 #include "core/pool.h"
+#include "ecs/system_scheduler.h"
 #include "ecs/world.h"
 #include "jobs/scheduler.h"
 #include "profiler/chrome_trace.h"
@@ -54,24 +55,61 @@ int main() {
             float x = 0;
             float y = 0;
         };
+        struct Color {
+            float r = 0;
+            float g = 0;
+        };
+
         hive::ecs::World world;
-        for (int i = 0; i < 100; ++i) {
+        constexpr int kEntities = 50000;
+        for (int i = 0; i < kEntities; ++i) {
             const hive::ecs::Entity entity = world.create();
             world.add<Position>(entity, Position{static_cast<float>(i), 0.0f});
-            world.add<Velocity>(entity, Velocity{1.0f, 0.0f});
+            world.add<Velocity>(entity, Velocity{1.0f, 0.5f});
+            world.add<Color>(entity, Color{});
         }
-        float checksum = 0.0f;
+
+        constexpr float kDt = 1.0f / 60.0f;
+        hive::ecs::SystemScheduler systems(sched);
+        systems.add<Position, const Velocity>("integrate",
+                                              [kDt](Position& pos, const Velocity& vel) {
+                                                  for (int k = 0; k < 16; ++k) {
+                                                      pos.x += vel.x * kDt;
+                                                      pos.y += vel.y * kDt;
+                                                  }
+                                              });
+        systems.add<Color, const Velocity>("recolor", [](Color& color, const Velocity& vel) {
+            for (int k = 0; k < 16; ++k) {
+                color.r = vel.x * static_cast<float>(k + 1);
+                color.g = vel.y * static_cast<float>(k + 1);
+            }
+        });
+        systems.add<Position>("bounce", [](Position& pos) {
+            if (pos.x < 0.0f) {
+                pos.x = 0.0f;
+            }
+        });
+
         {
-            PROFILE_SCOPE("ecs.query");
-            world.query<Position, const Velocity>().each([&](Position& pos, const Velocity& vel) {
-                pos.x += vel.x;
-                checksum += pos.x;
-            });
+            PROFILE_SCOPE("ecs.systems");
+            systems.run(world);
         }
-        std::cout << "ecs query checksum: " << checksum << '\n';
+
+        float checksum = 0.0f;
+        world.query<const Position, const Color>().each(
+            [&](const Position& pos, const Color& color) {
+                checksum += pos.x + color.r;
+            });
+        std::cout << "ecs systems checksum: " << checksum << '\n';
+        std::cout << "waves: " << systems.wave_count()
+                  << " (integrate=" << systems.wave_of("integrate")
+                  << " recolor=" << systems.wave_of("recolor")
+                  << " bounce=" << systems.wave_of("bounce") << ")\n";
+
+        // Dump while workers are still alive so their rings are in the registry.
+        hive::profiler::write_chrome_trace("trace.json");
     }
 
-    hive::profiler::write_chrome_trace("trace.json");
     hive::profiler::shutdown();
 
     std::cout << "Hive Engine ready. Hardware threads: " << std::thread::hardware_concurrency()

@@ -21,6 +21,8 @@ add_executable(hive_tests
     ecs/test_migration.cpp
     ecs/test_query.cpp
     ecs/test_commands.cpp
+    ecs/test_parallel_query.cpp
+    ecs/test_system_scheduler.cpp
 )
 target_link_libraries(hive_tests PRIVATE hive_core hive_profiler hive_jobs hive_ecs Catch2::Catch2WithMain)
 hive_set_warnings(hive_tests)

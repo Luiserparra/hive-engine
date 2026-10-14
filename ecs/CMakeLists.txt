@@ -4,8 +4,9 @@ add_library(hive_ecs
     archetype.cpp
     world.cpp
     command_buffer.cpp
+    system_scheduler.cpp
 )
 target_include_directories(hive_ecs PUBLIC ${PROJECT_SOURCE_DIR})
-target_link_libraries(hive_ecs PUBLIC hive_core)
+target_link_libraries(hive_ecs PUBLIC hive_core hive_jobs)
 hive_set_warnings(hive_ecs)
 hive_enable_sanitizers(hive_ecs)

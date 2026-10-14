@@ -8,6 +8,7 @@
 #include <fstream>
 #include <ostream>
 #include <string_view>
+#include <vector>
 
 namespace hive::profiler {
 namespace {
@@ -49,7 +50,7 @@ void write_chrome_trace(const char* path) {
         return;
     }
 
-    const std::span<const Event> events = events_for_this_thread();
+    const std::vector<Event> events = snapshot_all_threads();
 
     out << "{\n  \"displayTimeUnit\": \"ns\",\n  \"traceEvents\": [\n";
     for (std::size_t i = 0; i < events.size(); ++i) {
@@ -61,8 +62,7 @@ void write_chrome_trace(const char* path) {
         out << "    {\"name\": ";
         write_escaped(out, name);
         out << ", \"cat\": \"function\", \"ph\": \"X\", \"ts\": " << start
-            << ", \"dur\": " << (end - start) << ", \"pid\": 1, \"tid\": " << e.tid
-            << "}";
+            << ", \"dur\": " << (end - start) << ", \"pid\": 1, \"tid\": " << e.tid << "}";
         if (i + 1 < events.size()) {
             out << ',';
         }

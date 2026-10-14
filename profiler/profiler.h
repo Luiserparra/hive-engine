@@ -3,11 +3,15 @@
 #include <cstddef>
 #include <cstdint>
 #include <span>
+#include <vector>
 
 #define HIVE_CONCAT_INNER(a, b) a##b
 #define HIVE_CONCAT(a, b) HIVE_CONCAT_INNER(a, b)
 
-#define PROFILE_SCOPE(name) ::hive::profiler::Scope HIVE_CONCAT(_hive_scope_, __LINE__){name}
+#define PROFILE_SCOPE(name)                                                                        \
+    ::hive::profiler::Scope HIVE_CONCAT(_hive_scope_, __LINE__) {                                  \
+        name                                                                                       \
+    }
 
 namespace hive::profiler {
 
@@ -33,14 +37,21 @@ private:
     std::uint64_t m_start_us = 0;
 };
 
-// Allocates this thread's ring buffer. Safe to call more than once (re-init
-// replaces the buffer and discards prior events). Capacity 0 is treated as 1.
+// Allocates this thread's ring buffer and registers it for snapshot_all_threads.
+// Safe to call more than once (re-init replaces the buffer and discards prior
+// events). Capacity 0 is treated as 1.
 void init(std::size_t events_per_thread = 65536);
 
-// Drops this thread's buffer. Scopes become no-ops until init() again.
+// Unregisters this thread and drops its buffer. Scopes become no-ops until init()
+// again.
 void shutdown();
 
 // Chronological order, oldest surviving event first. Empty if not initialized.
 [[nodiscard]] std::span<const Event> events_for_this_thread();
+
+// Copies every registered thread's ring. Not a hot path — may allocate.
+// Call only when those threads are idle (after wait/run); concurrent Scope
+// writes would race the copy.
+[[nodiscard]] std::vector<Event> snapshot_all_threads();
 
 } // namespace hive::profiler

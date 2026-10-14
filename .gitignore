@@ -35,3 +35,7 @@ build/
 out/
 .vs/
 .cache/
+
+# Personal learning notes
+docs/learn/
+.cursor/rules/40-learning-notes.mdc

@@ -23,7 +23,11 @@ void WorkStealingDeque::push(void* item) noexcept {
     [[maybe_unused]] const std::int64_t t = m_top.load(std::memory_order_acquire);
     HIVE_ASSERT(b - t < static_cast<std::int64_t>(kCapacity));
 
-    m_buffer[static_cast<std::size_t>(b) & kMask].store(item, std::memory_order_relaxed);
+    // Release, not relaxed: pairs with steal's acquire load so the job's fields
+    // (written before push) happen-before the thief's reads. The seq_cst fence
+    // below still orders this store against bottom. TSan does not treat that
+    // fence as a happens-before edge between two relaxed slot accesses.
+    m_buffer[static_cast<std::size_t>(b) & kMask].store(item, std::memory_order_release);
     // Seq_cst fence: the slot store must be visible to a thief before bottom is
     // published. Lê et al. — a release store of bottom is not enough on ARM.
     std::atomic_thread_fence(std::memory_order_seq_cst);
@@ -66,7 +70,7 @@ void* WorkStealingDeque::steal() noexcept {
     std::atomic_thread_fence(std::memory_order_seq_cst);
     const std::int64_t b = m_bottom.load(std::memory_order_acquire);
     if (t < b) {
-        void* item = m_buffer[static_cast<std::size_t>(t) & kMask].load(std::memory_order_relaxed);
+        void* item = m_buffer[static_cast<std::size_t>(t) & kMask].load(std::memory_order_acquire);
         // Seq_cst CAS: claim index t. Failure means another thief or the owner
         // pop took it — return nullptr and let the caller retry.
         if (!m_top.compare_exchange_strong(t, t + 1, std::memory_order_seq_cst,

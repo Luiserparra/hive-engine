@@ -9,12 +9,24 @@
 #include <thread>
 #include <vector>
 
+#ifndef __has_feature
+#define __has_feature(x) 0
+#endif
+
+// One million jobs does not finish inside ctest's 180s under TSan. A few tens
+// of thousands still cross threads often enough to catch a lost increment.
+#if defined(__SANITIZE_THREAD__) || __has_feature(thread_sanitizer)
+constexpr int kIncrementJobs = 20'000;
+#else
+constexpr int kIncrementJobs = 1'000'000;
+#endif
+
 TEST_CASE("stress one million increment jobs", "[stress]") {
     const unsigned threads = std::max(2u, std::thread::hardware_concurrency());
     hive::jobs::Scheduler sched{threads};
     hive::jobs::Counter done;
     std::atomic<int> count{0};
-    constexpr int kJobs = 1'000'000;
+    constexpr int kJobs = kIncrementJobs;
     for (int i = 0; i < kJobs; ++i) {
         sched.schedule(
             [&] {

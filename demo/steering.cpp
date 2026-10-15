@@ -31,25 +31,9 @@ std::uint8_t lerp_u8(std::uint8_t a, std::uint8_t b, float t) noexcept {
 void accumulate_neighbor(SteerAccum& acc, hive::core::Vec2 pos, hive::core::Vec2 vel, Team team,
                          hive::core::Vec2 npos, hive::core::Vec2 nvel, Team nteam,
                          const BoidParams& params) {
-    (void)vel;
     const hive::core::Vec2 away = pos - npos;
     const float dist_sq = hive::core::length_sq(away);
-    const float perc_sq = params.perception * params.perception;
-    if (dist_sq > perc_sq || dist_sq < 1.0e-8f) {
-        return;
-    }
-
-    const float dist = std::sqrt(dist_sq);
-    if (dist < params.separation_radius) {
-        acc.sep += away * (1.0f / (dist_sq + 1.0e-4f));
-        acc.n_sep += 1;
-    }
-
-    if (team.id == nteam.id) {
-        acc.align += nvel;
-        acc.coh += npos;
-        acc.n_flock += 1;
-    }
+    accumulate_neighbor_dist_sq(acc, pos, vel, team, npos, nvel, nteam, away, dist_sq, params);
 }
 
 hive::core::Vec2 finish_steer(hive::core::Vec2 pos, hive::core::Vec2 vel, const SteerAccum& acc,

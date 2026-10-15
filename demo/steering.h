@@ -35,6 +35,32 @@ void accumulate_neighbor(SteerAccum& acc, hive::core::Vec2 pos, hive::core::Vec2
                          hive::core::Vec2 npos, hive::core::Vec2 nvel, Team nteam,
                          const BoidParams& params);
 
+// Hot-path accumulate: `away` is pos - npos, `dist_sq` is already length_sq(away).
+// Separation uses dist_sq < r², which matches dist < r for these non-negative values.
+inline void accumulate_neighbor_dist_sq(SteerAccum& acc, hive::core::Vec2 pos, hive::core::Vec2 vel,
+                                        Team team, hive::core::Vec2 npos, hive::core::Vec2 nvel,
+                                        Team nteam, hive::core::Vec2 away, float dist_sq,
+                                        const BoidParams& params) noexcept {
+    (void)pos;
+    (void)vel;
+    const float perc_sq = params.perception * params.perception;
+    if (dist_sq > perc_sq || dist_sq < 1.0e-8f) {
+        return;
+    }
+
+    const float sep_sq = params.separation_radius * params.separation_radius;
+    if (dist_sq < sep_sq) {
+        acc.sep += away * (1.0f / (dist_sq + 1.0e-4f));
+        acc.n_sep += 1;
+    }
+
+    if (team.id == nteam.id) {
+        acc.align += nvel;
+        acc.coh += npos;
+        acc.n_flock += 1;
+    }
+}
+
 [[nodiscard]] hive::core::Vec2 finish_steer(hive::core::Vec2 pos, hive::core::Vec2 vel,
                                             const SteerAccum& acc, const BoidParams& params);
 

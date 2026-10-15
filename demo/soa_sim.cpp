@@ -5,6 +5,7 @@
 #include "profiler/profiler.h"
 
 #include <algorithm>
+#include <span>
 
 namespace hive::demo {
 namespace {
@@ -89,11 +90,29 @@ void SoaSim::gather() {
     });
 }
 
+void SoaSim::permute_packed() {
+    const std::span<const std::uint32_t> idx = m_grid_ptr->indices();
+    const std::uint32_t n = static_cast<std::uint32_t>(idx.size());
+    m_packed_pos.resize(n);
+    m_packed_vel.resize(n);
+    m_packed_team.resize(n);
+    for (std::uint32_t k = 0; k < n; ++k) {
+        const std::uint32_t src = idx[k];
+        m_packed_pos[k] = m_pos[src];
+        m_packed_vel[k] = m_vel[src];
+        m_packed_team[k] = m_team[src];
+    }
+}
+
 void SoaSim::apply_boids() {
     const std::uint32_t n = static_cast<std::uint32_t>(m_pos.size());
     m_accel.assign(n, {});
     if (n == 0) {
         return;
+    }
+
+    if (m_config.grid_on) {
+        permute_packed();
     }
 
     jobs::Counter done;
@@ -103,10 +122,13 @@ void SoaSim::apply_boids() {
             SteerAccum acc;
             const auto self = static_cast<std::uint32_t>(i);
             if (m_config.grid_on) {
-                m_grid_ptr->for_neighbors(
-                    self, m_pos[i], m_config.boids.perception, [&](std::uint32_t j) {
-                        accumulate_neighbor(acc, m_pos[i], m_vel[i], m_team[i], m_pos[j], m_vel[j],
-                                            m_team[j], m_config.boids);
+                m_grid_ptr->for_neighbors_packed(
+                    self, m_pos[i], m_config.boids.perception, m_packed_pos,
+                    [&](std::uint32_t slot, hive::core::Vec2 away, float dist_sq) {
+                        accumulate_neighbor_dist_sq(acc, m_pos[i], m_vel[i], m_team[i],
+                                                    m_packed_pos[slot], m_packed_vel[slot],
+                                                    m_packed_team[slot], away, dist_sq,
+                                                    m_config.boids);
                     });
             } else {
                 for (std::uint32_t j = 0; j < m_pos.size(); ++j) {

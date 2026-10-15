@@ -32,6 +32,7 @@ private:
     void build_systems();
     void spawn_one(hive::ecs::World& world);
     void gather();
+    void permute_packed();
     void apply_boids();
     void scatter_velocity();
     void lifetime_pass(float dt);
@@ -51,6 +52,9 @@ private:
     std::vector<Team> m_team;
     std::vector<Velocity*> m_vel_ptr;
     std::vector<hive::core::Vec2> m_accel;
+    std::vector<hive::core::Vec2> m_packed_pos;
+    std::vector<hive::core::Vec2> m_packed_vel;
+    std::vector<Team> m_packed_team;
 };
 
 } // namespace hive::demo

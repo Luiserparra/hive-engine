@@ -78,6 +78,10 @@ void SpatialGrid::rebuild(std::span<const hive::core::Vec2> positions, float cel
     }
 }
 
+std::span<const std::uint32_t> SpatialGrid::indices() const noexcept {
+    return m_indices;
+}
+
 std::uint32_t SpatialGrid::cell_count() const noexcept {
     return m_cols * m_rows;
 }

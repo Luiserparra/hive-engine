@@ -23,8 +23,8 @@ struct ThreadState {
 thread_local ThreadState t_state;
 std::atomic<std::uint32_t> g_next_tid{1};
 
-// Mutex only for init / shutdown / snapshot_all_threads. Scope ctor/dtor
-// never take it — those stay on the per-thread ring.
+// Mutex only for init / shutdown / snapshots. Scope ctor/dtor never take it —
+// those stay on the per-thread ring.
 std::mutex g_registry_mu;
 std::vector<ThreadState*> g_threads;
 
@@ -46,15 +46,45 @@ void unregister_this_thread() {
     g_threads.erase(std::remove(g_threads.begin(), g_threads.end(), &t_state), g_threads.end());
 }
 
+const Event& logical_at(const ThreadState& state, std::size_t oldest, std::size_t i) {
+    return state.ring[(oldest + i) % state.capacity];
+}
+
+std::size_t oldest_index(const ThreadState& state) {
+    return (state.head + state.capacity - state.count) % state.capacity;
+}
+
+void copy_ring_from(const ThreadState& state, std::size_t first_logical, std::vector<Event>& out) {
+    if (state.ring == nullptr || first_logical >= state.count) {
+        return;
+    }
+    const std::size_t oldest = oldest_index(state);
+    out.reserve(out.size() + (state.count - first_logical));
+    for (std::size_t i = first_logical; i < state.count; ++i) {
+        out.push_back(logical_at(state, oldest, i));
+    }
+}
+
 void copy_ring(const ThreadState& state, std::vector<Event>& out) {
+    copy_ring_from(state, 0, out);
+}
+
+void copy_ring_since(const ThreadState& state, std::uint64_t from_us, std::vector<Event>& out) {
     if (state.ring == nullptr || state.count == 0) {
         return;
     }
-    const std::size_t oldest = (state.head + state.capacity - state.count) % state.capacity;
-    out.reserve(out.size() + state.count);
-    for (std::size_t i = 0; i < state.count; ++i) {
-        out.push_back(state.ring[(oldest + i) % state.capacity]);
+    const std::size_t oldest = oldest_index(state);
+    std::size_t lo = 0;
+    std::size_t hi = state.count;
+    while (lo < hi) {
+        const std::size_t mid = lo + (hi - lo) / 2;
+        if (logical_at(state, oldest, mid).end_us < from_us) {
+            lo = mid + 1;
+        } else {
+            hi = mid;
+        }
     }
+    copy_ring_from(state, lo, out);
 }
 
 } // namespace
@@ -122,6 +152,15 @@ std::vector<Event> snapshot_all_threads() {
     std::vector<Event> out;
     for (const ThreadState* state : g_threads) {
         copy_ring(*state, out);
+    }
+    return out;
+}
+
+std::vector<Event> snapshot_all_threads_since(std::uint64_t from_us) {
+    std::lock_guard<std::mutex> lock(g_registry_mu);
+    std::vector<Event> out;
+    for (const ThreadState* state : g_threads) {
+        copy_ring_since(*state, from_us, out);
     }
     return out;
 }

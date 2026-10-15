@@ -137,12 +137,7 @@ Each milestone ends with something verifiable; don't move on until its exit crit
 - Panel with live toggles (AoS/SoA, threads, grid on/off) and a timings panel (not a flame graph).
 - **Exit (met):** 100k entities at ≥ 60 FPS in Release, with toggles showing the difference instantly. Measure locally (`cmake --preset release` then `build/release/hive_engine`).
 
-### M6 · Performance investigation
-- Find a real bottleneck with the profiler and `perf`, fix it, and measure.
-- Write `docs/performance-investigation.md` with symptom, measurement, hypothesis, fix, and before/after numbers.
-- **Exit:** the document, with charts generated from the benchmark JSON files.
-
-### M7 · Polish and presentation
+### M6 · Polish and presentation
 - Final README, architecture diagram, demo GIF/video, one-command reproducible build and benchmarks.
 - **Exit:** someone else can clone the repo, build it, and run the demo without help.
 

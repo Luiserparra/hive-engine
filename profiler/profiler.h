@@ -51,7 +51,12 @@ void shutdown();
 
 // Copies every registered thread's ring. Not a hot path — may allocate.
 // Call only when those threads are idle (after wait/run); concurrent Scope
-// writes would race the copy.
+// writes would race the copy. Use for whole-history dumps (`trace.json`).
 [[nodiscard]] std::vector<Event> snapshot_all_threads();
+
+// Same idle-thread contract as snapshot_all_threads, but copies only events
+// with end_us >= from_us. Rings are sorted by end_us in logical order, so this
+// is a binary search plus a copy of the tail. Use for per-frame polling.
+[[nodiscard]] std::vector<Event> snapshot_all_threads_since(std::uint64_t from_us);
 
 } // namespace hive::profiler

@@ -14,7 +14,7 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(benchmark)
 
-add_executable(hive_bench bench_jobs.cpp bench_ecs.cpp)
+add_executable(hive_bench bench_jobs.cpp bench_ecs.cpp bench_profiler.cpp)
 target_include_directories(hive_bench PRIVATE ${PROJECT_SOURCE_DIR})
-target_link_libraries(hive_bench PRIVATE hive_jobs hive_ecs benchmark::benchmark benchmark::benchmark_main)
+target_link_libraries(hive_bench PRIVATE hive_jobs hive_ecs hive_profiler benchmark::benchmark benchmark::benchmark_main)
 hive_set_warnings(hive_bench)

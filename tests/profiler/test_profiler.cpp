@@ -5,6 +5,7 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include <atomic>
+#include <chrono>
 #include <cstdint>
 #include <filesystem>
 #include <fstream>
@@ -179,5 +180,90 @@ TEST_CASE("profiler snapshot_all_threads covers worker tids") {
     const std::string body((std::istreambuf_iterator<char>(in)), {});
     REQUIRE(body.find("worker_job") != std::string::npos);
 
+    hive::profiler::shutdown();
+}
+
+TEST_CASE("profiler snapshot_all_threads_since is empty with no events") {
+    hive::profiler::init(16);
+    REQUIRE(hive::profiler::snapshot_all_threads_since(0).empty());
+    hive::profiler::shutdown();
+}
+
+TEST_CASE("profiler snapshot_all_threads_since cutoff mid-history") {
+    hive::profiler::init(32);
+    const char* names[] = {"a", "b", "c", "d", "e"};
+    for (const char* n : names) {
+        PROFILE_SCOPE(n);
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+
+    const std::vector<hive::profiler::Event> all = hive::profiler::snapshot_all_threads();
+    REQUIRE(all.size() == 5);
+
+    const std::uint64_t cutoff = all[2].end_us;
+    const std::vector<hive::profiler::Event> since =
+        hive::profiler::snapshot_all_threads_since(cutoff);
+    REQUIRE_FALSE(since.empty());
+    for (const hive::profiler::Event& event : since) {
+        REQUIRE(event.end_us >= cutoff);
+    }
+
+    std::size_t expected = 0;
+    for (const hive::profiler::Event& event : all) {
+        if (event.end_us >= cutoff) {
+            ++expected;
+        }
+    }
+    REQUIRE(since.size() == expected);
+    hive::profiler::shutdown();
+}
+
+TEST_CASE("profiler snapshot_all_threads_since all-old and all-new") {
+    hive::profiler::init(16);
+    {
+        PROFILE_SCOPE("only");
+    }
+    const std::vector<hive::profiler::Event> all = hive::profiler::snapshot_all_threads();
+    REQUIRE(all.size() == 1);
+
+    const std::vector<hive::profiler::Event> all_new =
+        hive::profiler::snapshot_all_threads_since(0);
+    REQUIRE(all_new.size() == 1);
+    REQUIRE(std::string_view(all_new[0].name) == "only");
+
+    const std::vector<hive::profiler::Event> all_old =
+        hive::profiler::snapshot_all_threads_since(all[0].end_us + 1);
+    REQUIRE(all_old.empty());
+    hive::profiler::shutdown();
+}
+
+TEST_CASE("profiler snapshot_all_threads_since survives ring wrap") {
+    hive::profiler::init(4);
+    const char* names[] = {"e0", "e1", "e2", "e3", "e4", "e5"};
+    for (const char* n : names) {
+        PROFILE_SCOPE(n);
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+
+    const std::vector<hive::profiler::Event> all = hive::profiler::snapshot_all_threads();
+    REQUIRE(all.size() == 4);
+    REQUIRE(std::string_view(all[0].name) == "e2");
+    REQUIRE(std::string_view(all[3].name) == "e5");
+
+    const std::uint64_t cutoff = all[1].end_us;
+    const std::vector<hive::profiler::Event> since =
+        hive::profiler::snapshot_all_threads_since(cutoff);
+    REQUIRE_FALSE(since.empty());
+    for (const hive::profiler::Event& event : since) {
+        REQUIRE(event.end_us >= cutoff);
+    }
+
+    std::size_t expected = 0;
+    for (const hive::profiler::Event& event : all) {
+        if (event.end_us >= cutoff) {
+            ++expected;
+        }
+    }
+    REQUIRE(since.size() == expected);
     hive::profiler::shutdown();
 }

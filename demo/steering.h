@@ -3,6 +3,7 @@
 #include "core/vec2.h"
 #include "demo/components.h"
 
+#include <cstdint>
 #include <span>
 
 namespace hive::demo {
@@ -60,6 +61,15 @@ inline void accumulate_neighbor_dist_sq(SteerAccum& acc, hive::core::Vec2 pos, h
         acc.n_flock += 1;
     }
 }
+
+// AVX2 kernel over a contiguous packed slot range [begin, end). Same filters as
+// accumulate_neighbor_dist_sq. Skips indices[k] == self_id. No allocation.
+void accumulate_packed_range(SteerAccum& acc, hive::core::Vec2 self_pos, Team self_team,
+                             std::uint32_t self_id, std::span<const hive::core::Vec2> packed_pos,
+                             std::span<const hive::core::Vec2> packed_vel,
+                             std::span<const Team> packed_team,
+                             std::span<const std::uint32_t> indices, std::uint32_t begin,
+                             std::uint32_t end, float perc_sq, float sep_sq) noexcept;
 
 [[nodiscard]] hive::core::Vec2 finish_steer(hive::core::Vec2 pos, hive::core::Vec2 vel,
                                             const SteerAccum& acc, const BoidParams& params);

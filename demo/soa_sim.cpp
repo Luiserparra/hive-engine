@@ -115,20 +115,22 @@ void SoaSim::apply_boids() {
         permute_packed();
     }
 
+    const float perc_sq = m_config.boids.perception * m_config.boids.perception;
+    const float sep_sq = m_config.boids.separation_radius * m_config.boids.separation_radius;
+
     jobs::Counter done;
     m_jobs->parallel_for(
         0, n, kBoidGrain,
-        [this](std::size_t i) {
+        [this, perc_sq, sep_sq](std::size_t i) {
             SteerAccum acc;
             const auto self = static_cast<std::uint32_t>(i);
             if (m_config.grid_on) {
-                m_grid_ptr->for_neighbors_packed(
-                    self, m_pos[i], m_config.boids.perception, m_packed_pos,
-                    [&](std::uint32_t slot, hive::core::Vec2 away, float dist_sq) {
-                        accumulate_neighbor_dist_sq(acc, m_pos[i], m_vel[i], m_team[i],
-                                                    m_packed_pos[slot], m_packed_vel[slot],
-                                                    m_packed_team[slot], away, dist_sq,
-                                                    m_config.boids);
+                const std::span<const std::uint32_t> idx = m_grid_ptr->indices();
+                m_grid_ptr->for_neighbor_ranges(
+                    m_pos[i], [&](std::uint32_t begin, std::uint32_t end) {
+                        accumulate_packed_range(acc, m_pos[i], m_team[i], self, m_packed_pos,
+                                                m_packed_vel, m_packed_team, idx, begin, end,
+                                                perc_sq, sep_sq);
                     });
             } else {
                 for (std::uint32_t j = 0; j < m_pos.size(); ++j) {

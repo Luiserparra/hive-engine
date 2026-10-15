@@ -46,11 +46,20 @@ add_library(hive_swarm_sim
     steering.cpp
     soa_sim.cpp
     aos_sim.cpp
+    steer_packed_avx2.cpp
 )
 target_include_directories(hive_swarm_sim PUBLIC ${PROJECT_SOURCE_DIR})
 target_link_libraries(hive_swarm_sim PUBLIC hive_core hive_ecs hive_jobs hive_profiler)
 hive_set_warnings(hive_swarm_sim)
 hive_enable_sanitizers(hive_swarm_sim)
+
+# AVX2 only on the packed neighbor kernel. The rest of hive_swarm_sim stays
+# at the toolchain baseline (MSVC x64 = SSE2). Callers see a Vec2/span API.
+if(MSVC)
+    set_source_files_properties(steer_packed_avx2.cpp PROPERTIES COMPILE_OPTIONS "/arch:AVX2")
+else()
+    set_source_files_properties(steer_packed_avx2.cpp PROPERTIES COMPILE_OPTIONS "-mavx2")
+endif()
 
 add_executable(hive_engine
     main.cpp

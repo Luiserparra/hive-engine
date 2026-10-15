@@ -1,7 +1,8 @@
 #pragma once
 
+#include "core/cache_line.h"
+
 #include <atomic>
-#include <new>
 
 namespace hive::jobs {
 
@@ -18,7 +19,7 @@ private:
     friend class Scheduler;
     void decrement() noexcept;
 
-    alignas(std::hardware_destructive_interference_size) std::atomic<int> m_value{0};
+    alignas(hive::core::kCacheLineBytes) std::atomic<int> m_value{0};
 };
 
 } // namespace hive::jobs

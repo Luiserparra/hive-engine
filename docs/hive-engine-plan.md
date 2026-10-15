@@ -54,7 +54,7 @@ sched.wait(done);
 
 ### What to demonstrate
 - Correct memory orders (`acquire/release/seq_cst`), justified in comments.
-- Avoiding *false sharing* (`alignas(std::hardware_destructive_interference_size)`).
+- Avoiding *false sharing* (`alignas(hive::core::kCacheLineBytes)`).
 - Comparison: `std::async` vs. mutex-based thread pool vs. work-stealing.
 
 ## 5. Module: ECS

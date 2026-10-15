@@ -1,12 +1,12 @@
 #include "jobs/scheduler.h"
 
+#include "core/cache_line.h"
 #include "jobs/deque.h"
 #include "profiler/profiler.h"
 
 #include <atomic>
 #include <condition_variable>
 #include <mutex>
-#include <new>
 #include <thread>
 
 namespace hive::jobs {
@@ -24,7 +24,7 @@ thread_local Scheduler::Worker* Scheduler::t_worker = nullptr;
 #pragma warning(disable : 4324) // Worker is padded so adjacent workers do not false-share
 #endif
 
-struct alignas(std::hardware_destructive_interference_size) Scheduler::Worker {
+struct alignas(hive::core::kCacheLineBytes) Scheduler::Worker {
     explicit Worker(unsigned idx) : m_index(idx) {
         m_jobs = std::make_unique<Job[]>(kJobPoolSize);
         Job* head = nullptr;

@@ -18,9 +18,7 @@ Arena::Arena(std::size_t capacity) {
 }
 
 Arena::Arena(Arena&& other) noexcept
-    : m_buffer(std::move(other.m_buffer))
-    , m_capacity(other.m_capacity)
-    , m_offset(other.m_offset) {
+    : m_buffer(std::move(other.m_buffer)), m_capacity(other.m_capacity), m_offset(other.m_offset) {
     other.m_capacity = 0;
     other.m_offset = 0;
 }
@@ -37,11 +35,13 @@ Arena& Arena::operator=(Arena&& other) noexcept {
 Arena::~Arena() = default;
 
 void* Arena::allocate(std::size_t size, std::size_t alignment) {
-    if (size == 0) { return nullptr; }
+    if (size == 0) {
+        return nullptr;
+    }
     HIVE_ASSERT(alignment != 0 && (alignment & (alignment - 1)) == 0);
     const std::size_t aligned = align_up(m_offset, alignment);
     if (aligned > m_capacity || size > m_capacity - aligned) {
-        return nullptr; 
+        return nullptr;
     }
     m_offset = aligned + size;
     return m_buffer.get() + aligned;

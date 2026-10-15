@@ -18,18 +18,14 @@
 
 TEST_CASE("profiler scopes are no-ops without init") {
     hive::profiler::shutdown();
-    {
-        PROFILE_SCOPE("nope");
-    }
+    { PROFILE_SCOPE("nope"); }
     REQUIRE(hive::profiler::events_for_this_thread().empty());
 }
 
 TEST_CASE("profiler one scope records one event with the literal name pointer") {
     hive::profiler::init(64);
     const char* literal = "one_scope";
-    {
-        PROFILE_SCOPE(literal);
-    }
+    { PROFILE_SCOPE(literal); }
     const auto events = hive::profiler::events_for_this_thread();
     REQUIRE(events.size() == 1);
     REQUIRE(events[0].name == literal);
@@ -41,9 +37,7 @@ TEST_CASE("profiler nested scopes nest in time") {
     hive::profiler::init(64);
     {
         PROFILE_SCOPE("outer");
-        {
-            PROFILE_SCOPE("inner");
-        }
+        { PROFILE_SCOPE("inner"); }
     }
     const auto events = hive::profiler::events_for_this_thread();
     REQUIRE(events.size() == 2);
@@ -67,9 +61,7 @@ TEST_CASE("profiler nested scopes nest in time") {
 
 TEST_CASE("profiler threads do not mix events") {
     hive::profiler::init(32);
-    {
-        PROFILE_SCOPE("main");
-    }
+    { PROFILE_SCOPE("main"); }
 
     // Catch2 REQUIRE throws. An uncaught exception on a std::thread calls
     // std::terminate() -> abort() and pops an MSVC dialog. Capture on the
@@ -78,9 +70,7 @@ TEST_CASE("profiler threads do not mix events") {
     const char* worker_name = nullptr;
     std::thread worker([&] {
         hive::profiler::init(32);
-        {
-            PROFILE_SCOPE("worker");
-        }
+        { PROFILE_SCOPE("worker"); }
         const auto ev = hive::profiler::events_for_this_thread();
         worker_count = ev.size();
         if (!ev.empty()) {
@@ -129,9 +119,7 @@ TEST_CASE("profiler chrome trace empty file contains traceEvents") {
 
 TEST_CASE("profiler chrome trace includes recorded scope names") {
     hive::profiler::init(16);
-    {
-        PROFILE_SCOPE("Arena.allocate");
-    }
+    { PROFILE_SCOPE("Arena.allocate"); }
     const auto path = std::filesystem::temp_directory_path() / "hive_scope_trace.json";
     hive::profiler::write_chrome_trace(path.string().c_str());
     std::ifstream in(path);
@@ -145,21 +133,23 @@ TEST_CASE("profiler snapshot_all_threads covers worker tids") {
     hive::profiler::init(256);
     hive::jobs::Scheduler sched{2};
     hive::jobs::Counter done;
-    std::atomic<int> spins{0};
-    for (int i = 0; i < 128; ++i) {
+    std::atomic<int> entered{0};
+    // Worker 0 is this thread. Tiny jobs lose the race on CI: wait() drains
+    // worker 0's deque before the other thread is scheduled, so every event
+    // has the same tid. Each job blocks until both participants have entered.
+    for (int i = 0; i < 2; ++i) {
         sched.schedule(
-            [&spins] {
+            [&entered] {
                 PROFILE_SCOPE("worker_job");
-                int x = 0;
-                for (int k = 0; k < 20000; ++k) {
-                    x += k;
+                entered.fetch_add(1, std::memory_order_acq_rel);
+                while (entered.load(std::memory_order_acquire) < 2) {
+                    std::this_thread::yield();
                 }
-                spins.fetch_add(x != 0 ? 1 : 0, std::memory_order_relaxed);
             },
             &done);
     }
     sched.wait(done);
-    REQUIRE(spins.load(std::memory_order_relaxed) == 128);
+    REQUIRE(entered.load(std::memory_order_relaxed) == 2);
 
     const std::vector<hive::profiler::Event> events = hive::profiler::snapshot_all_threads();
     std::set<std::uint32_t> tids;
@@ -220,9 +210,7 @@ TEST_CASE("profiler snapshot_all_threads_since cutoff mid-history") {
 
 TEST_CASE("profiler snapshot_all_threads_since all-old and all-new") {
     hive::profiler::init(16);
-    {
-        PROFILE_SCOPE("only");
-    }
+    { PROFILE_SCOPE("only"); }
     const std::vector<hive::profiler::Event> all = hive::profiler::snapshot_all_threads();
     REQUIRE(all.size() == 1);
 

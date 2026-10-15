@@ -1,10 +1,11 @@
 #pragma once
 
+#include "core/cache_line.h"
+
 #include <atomic>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
-#include <new>
 
 namespace hive::jobs {
 
@@ -42,7 +43,7 @@ public:
 
 private:
     static constexpr std::size_t kMask = kCapacity - 1;
-    static constexpr std::size_t kCacheLine = std::hardware_destructive_interference_size;
+    static constexpr std::size_t kCacheLine = hive::core::kCacheLineBytes;
 
     // Thieves CAS m_top; the owner writes m_bottom. Separate cache lines so
     // a steal does not bounce the owner's bottom line (false sharing).

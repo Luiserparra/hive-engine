@@ -75,7 +75,7 @@ template <typename F> void Scheduler::schedule(F&& fn, Counter* counter) {
     static_assert(std::is_invocable_r_v<void, Fn>, "job lambda must be void()");
     static_assert(sizeof(Fn) <= Job::kPayloadBytes,
                   "job lambda is too large to fit in the 64-byte Job payload");
-    static_assert(alignof(Fn) <= alignof(std::max_align_t),
+    static_assert(alignof(Fn) <= Job::kPayloadAlign,
                   "job lambda alignment exceeds payload alignment");
 
     Job* job = allocate_job();

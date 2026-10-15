@@ -83,12 +83,9 @@ const char* hottest_pass(const TimingSample& sample) {
         float ms;
     };
     const Pass passes[] = {
-        {"grid", sample.grid_ms},
-        {"boids", sample.boids_ms},
-        {"systems", sample.systems_ms},
-        {"lifetime", sample.lifetime_ms},
-        {"instances", sample.instances_ms},
-        {"render", sample.render_ms},
+        {"grid", sample.grid_ms},           {"boids", sample.boids_ms},
+        {"systems", sample.systems_ms},     {"lifetime", sample.lifetime_ms},
+        {"instances", sample.instances_ms}, {"render", sample.render_ms},
         {"snapshot", sample.snapshot_ms},
     };
     const Pass* hot = &passes[0];

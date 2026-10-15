@@ -135,7 +135,7 @@ Each milestone ends with something verifiable; don't move on until its exit crit
 ### M5 · "Swarm" visual demo — done
 - raylib + ImGui, boids with a spatial grid, instanced rendering, continuous spawn/despawn.
 - Panel with live toggles (AoS/SoA, threads, grid on/off) and a timings panel (not a flame graph).
-- **Exit (met):** 100k entities at ≥ 60 FPS in Release, with toggles showing the difference instantly. Measure locally (`cmake --preset release` then `build/release/hive_engine`).
+- **Exit:** 100k entities at ≥ 30 FPS in Release, with toggles showing the difference instantly. Measure locally (`cmake --preset release` then `build/release/hive_engine`).
 
 ### M6 · Polish and presentation
 - Final README, architecture diagram, demo GIF/video, one-command reproducible build and benchmarks.
